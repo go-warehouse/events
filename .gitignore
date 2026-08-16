@@ -1,0 +1,5 @@
+# generated coverage profiles
+coverage/
+
+# build output
+bin/
