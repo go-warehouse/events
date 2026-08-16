@@ -1,7 +1,7 @@
 # events
 
-A small, typed, in-process publish/subscribe bus for Go. Stdlib only — no
-dependencies.
+A small, typed, in-process publish/subscribe event bus Go library — stdlib
+only, no dependencies.
 
 Subscribers receive events of their **exact runtime type**, wrapped in an
 `Event` carrying the ID the bus assigned at publish time. Delivery is
@@ -118,3 +118,11 @@ immediately, and its own goroutine then drains and exits.
 
 No persistence, replay, retry, cross-process transport, or topic strings.
 For multiple processes or brokers, use Watermill or similar.
+
+## Contributing
+
+Small, focused changes with tests — see [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## License
+
+[MIT](LICENSE)
