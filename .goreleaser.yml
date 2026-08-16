@@ -16,7 +16,11 @@ release:
   # Appended to the generated release notes — templated, so it always
   # names the tag being released.
   footer: |
-    Install with `go get github.com/go-warehouse/events@{{ .Tag }}`.
+    ### Install with
+
+    ```sh
+    go get github.com/go-warehouse/events@{{ .Tag }}
+    ```
 
 changelog:
   use: git
