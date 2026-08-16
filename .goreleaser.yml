@@ -13,6 +13,10 @@ builds:
 
 release:
   prerelease: auto # vX.Y.Z-rcN tags become prereleases
+  # Appended to the generated release notes — templated, so it always
+  # names the tag being released.
+  footer: |
+    Install with `go get github.com/go-warehouse/events@{{ .Tag }}`.
 
 changelog:
   use: git

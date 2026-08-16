@@ -61,11 +61,12 @@ jobs:
         run: |
           mkdir -p "$HOME/.local/bin"
           curl -sSL https://github.com/goreleaser/goreleaser/releases/download/v2.17.1/goreleaser_Linux_x86_64.tar.gz | tar xz -C "$HOME/.local/bin" goreleaser
-          "$HOME/.local/bin/goreleaser" --version
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          goreleaser --version
       # The release body is the changelog grouped from conventional commit
       # prefixes (feat/fix/docs) since the previous tag — no commit dump,
       # no manual notes. goreleaser creates the release itself.
       - name: create release
         env:
           GITHUB_TOKEN: ${{ github.token }}
-        run: "$HOME/.local/bin/goreleaser" release --clean
+        run: goreleaser release --clean
