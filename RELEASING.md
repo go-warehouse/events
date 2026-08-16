@@ -24,8 +24,9 @@ tag shape is validated strictly before anything is published.
 3. Watch the `release` workflow (Actions → release). It runs the gate,
    then creates the GitHub Release named after the tag.
 
-Done. If you want to refine the wording, edit the generated notes on the
-release page afterwards.
+Done. The release notes are generated from the commit prefixes — write
+good `feat:` / `fix:` / `docs:` messages. The grouping lives in
+[.goreleaser.yml](.goreleaser.yml).
 
 ## Tag rules
 
@@ -47,8 +48,10 @@ in order:
    - golangci-lint, pinned to the version in CI
 2. **build** (reusable workflow, shared with CI) — cross-compile matrix:
    linux/amd64, linux/arm64, darwin/amd64, darwin/arm64, windows/amd64
-3. **create release** — `gh release create` with notes generated from
-   commits since the previous tag.
+3. **create release** — goreleaser (pinned to the version in CI) generates
+   the changelog from conventional commits since the previous tag, groups
+   them by prefix (Features / Bug fixes / Documentation), and publishes
+   the GitHub Release.
 
 ## Versioning
 

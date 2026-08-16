@@ -1,0 +1,35 @@
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+#
+# Release config for a library-only module: nothing is built or attached —
+# the deliverable is the module itself, resolved from the version tag by
+# the Go module proxy. The GitHub Release body is the changelog below,
+# grouped from conventional commit prefixes.
+version: 2
+
+project_name: events
+
+builds:
+  - skip: true # library projects: no binaries to build
+
+release:
+  prerelease: auto # vX.Y.Z-rcN tags become prereleases
+
+changelog:
+  use: git
+  sort: asc
+  abbrev: 7 # short commit hashes in the notes
+  groups:
+    - title: Features
+      regexp: '^.*?feat(\([[:word:]]+\))??!?:.+$'
+      order: 0
+    - title: Bug fixes
+      regexp: '^.*?fix(\([[:word:]]+\))??!?:.+$'
+      order: 1
+    - title: Documentation
+      regexp: '^.*?docs(\([[:word:]]+\))??!?:.+$'
+      order: 2
+    - title: Other changes
+      order: 999 # catch-all: commits matching no group above
+  filters:
+    exclude:
+      - '^Merge'

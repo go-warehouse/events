@@ -37,7 +37,11 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          fetch-depth: 0 # gh release notes need commits since the last tag
+          fetch-depth: 0 # goreleaser's changelog needs commits since the last tag
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod # the module pins its own toolchain
+          cache: true
       # The trigger pattern is a first filter; this rejects a pattern
       # edge case before anything is published.
       - name: validate version tag
@@ -50,7 +54,18 @@ jobs:
               echo "tag $tag is not a vX.Y.Z or vX.Y.Z-rcN version tag" >&2
               exit 1 ;;
           esac
+      # Installed as a direct binary rather than an action: the version is
+      # pinned explicitly and matches the local toolchain (same pattern as
+      # golangci-lint in quality.yml).
+      - name: goreleaser v2.17.1 (direct binary)
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          curl -sSL https://github.com/goreleaser/goreleaser/releases/download/v2.17.1/goreleaser_Linux_x86_64.tar.gz | tar xz -C "$HOME/.local/bin" goreleaser
+          "$HOME/.local/bin/goreleaser" --version
+      # The release body is the changelog grouped from conventional commit
+      # prefixes (feat/fix/docs) since the previous tag — no commit dump,
+      # no manual notes. goreleaser creates the release itself.
       - name: create release
         env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" --generate-notes --title "$GITHUB_REF_NAME"
+          GITHUB_TOKEN: ${{ github.token }}
+        run: "$HOME/.local/bin/goreleaser" release --clean
