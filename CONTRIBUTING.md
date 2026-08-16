@@ -54,3 +54,8 @@ The public API is `New`, `Subscribe`, `Publish`, `Close`, `Wait`, `Event`,
 the two options, and `ErrClosed`. Changes to signatures or semantics are
 breaking — they need an issue first and a clear migration note in the
 README.
+
+## Releases
+
+Cutting a release is tagging and pushing — see
+[RELEASING.md](RELEASING.md).
