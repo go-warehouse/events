@@ -1,0 +1,40 @@
+# Main CI: runs on every push to main and on every PR targeting main.
+# It composes the shared quality gates and the shared cross-compile matrix,
+# then lets final-gate render the single required check for branch
+# protection (set the repo's required check to `final-gate`).
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Callers must grant at least everything their reusable workflows request:
+# contents for checkout, actions for the final-gate jobs report, and
+# pull-requests for its PR comment.
+permissions:
+  contents: read
+  actions: read
+  pull-requests: write
+
+jobs:
+  # vet → race → coverage >= 80% → golangci-lint, shared verbatim with
+  # the release workflow so a release can never publish what a commit
+  # wouldn't merge.
+  quality:
+    uses: ./.github/workflows/quality.yml
+
+  # The five cross-compile targets — shared with release, and gated on
+  # quality so machines aren't burned building code that fails its tests.
+  build:
+    needs: [quality]
+    uses: ./.github/workflows/build.yml
+
+  # Single required check for branch protection — see final-gate.yml.
+  # `if: always()` so the report renders even when quality or build fail.
+  final-gate:
+    needs: [quality, build]
+    if: always()
+    uses: ./.github/workflows/final-gate.yml
+    with:
+      wrapper: final-gate

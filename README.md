@@ -8,6 +8,28 @@ Subscribers receive events of their **exact runtime type**, wrapped in an
 asynchronous, FIFO per subscriber, and bounded: queues never grow without
 limit.
 
+## Installation
+
+```sh
+go get github.com/go-warehouse/events
+```
+
+```go
+import events "github.com/go-warehouse/events"
+```
+
+## Examples
+
+`examples/basic/` demonstrates the cross-package wiring the bus is designed
+for: the bus is created in `main`, a subscriber registers from its own
+package, and a producer publishes from another — with `Close` + `Wait`
+guaranteeing the final delivery. Run it with:
+
+```sh
+go run ./examples/basic
+# or: make build && ./bin/basic
+```
+
 ## Quick start
 
 ```go
@@ -91,18 +113,6 @@ immediately, and its own goroutine then drains and exits.
 - `WithBufferSize(n int)` — per-subscriber queue capacity (default 64).
 - `WithLogger(l *slog.Logger)` — logger for drop warnings and recovered
   handler panics (default `slog.Default()`).
-
-## Using a local checkout
-
-Until this module is published, consume it with a `replace` directive
-pointing at the checkout:
-
-```sh
-go mod edit -require=github.com/go-warehouse/events@v0.0.0
-go mod edit -replace=github.com/go-warehouse/events=/path/to/custom-go-libraries/go-events
-# add the import, then:
-go mod tidy
-```
 
 ## Non-goals
 

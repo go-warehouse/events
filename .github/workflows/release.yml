@@ -1,0 +1,56 @@
+# Releases: a pushed version tag runs the full gate — quality then the
+# cross-compile matrix — and only then creates the GitHub Release. Because
+# the Go module proxy resolves version tags directly, the release name IS
+# the `go get` version, so the tag shape is validated strictly. No manual
+# dispatch: it can only run on branches, which can never be valid version
+# tags — releases come from tags.
+#
+# Cut a release with:
+#   git tag v1.2.3 && git push origin v1.2.3
+name: release
+on:
+  push:
+    # v1.2.3 or release candidates like v1.2.3-rc1 — anything else is
+    # ignored by this workflow.
+    tags: ['v[0-9]+.[0-9]+.[0-9]+*']
+
+# contents: write — the only workflow that creates releases.
+permissions:
+  contents: write
+
+jobs:
+  # A release must pass the same gates as any commit: vet, race,
+  # coverage >= 80%, and lint.
+  quality:
+    uses: ./.github/workflows/quality.yml
+
+  # And the same five cross-compiles as main — a release that doesn't
+  # build everywhere must not publish.
+  build:
+    needs: [quality]
+    uses: ./.github/workflows/build.yml
+
+  release:
+    needs: [quality, build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # gh release notes need commits since the last tag
+      # The trigger pattern is a first filter; this rejects a pattern
+      # edge case before anything is published.
+      - name: validate version tag
+        run: |
+          tag="$GITHUB_REF_NAME"
+          case "$tag" in
+            v[0-9]*.[0-9]*.[0-9]* | v[0-9]*.[0-9]*.[0-9]*-rc[0-9]*)
+              echo "releasing $tag" ;;
+            *)
+              echo "tag $tag is not a vX.Y.Z or vX.Y.Z-rcN version tag" >&2
+              exit 1 ;;
+          esac
+      - name: create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" --generate-notes --title "$GITHUB_REF_NAME"

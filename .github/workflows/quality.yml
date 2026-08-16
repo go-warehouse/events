@@ -1,0 +1,55 @@
+# Quality gates shared by every caller (ci and release): a release must
+# pass exactly what a commit passes. Kept as a reusable workflow so the
+# gates exist in one place — callers `uses:` it and cannot drift.
+#
+# One job for the whole gate: the library is small enough that splitting
+# tests and lint across runners costs more than it reports.
+name: quality
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod # the module pins its own toolchain
+          cache: true
+
+      # vet (static analysis from the compiler team), the full suite under
+      # the race detector, and the same >= 80% coverage floor that
+      # `make coverage` enforces locally — CI and local must agree.
+      - run: go vet ./...
+      - run: go test -race -failfast ./...
+      - name: coverage gate (>= 80%)
+        run: make coverage
+
+      # golangci-lint keeps its analysis cache here; runner.tool_cache does
+      # not persist on hosted runners, so cache it (plus the downloaded
+      # binary) explicitly. The version is in the key so upgrades miss.
+      - name: cache golangci-lint results and binary
+        uses: actions/cache@v6
+        with:
+          path: |
+            ~/.cache/golangci-lint
+            ~/.local/bin/golangci-lint-2.12.2-linux-amd64
+          key: golangci-lint-2.12.2-${{ hashFiles('.golangci.yml') }}
+      # Installed as a direct binary rather than an action: the version is
+      # pinned explicitly and matches the local toolchain.
+      - name: golangci-lint v2.12.2 (direct binary)
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          bin="$HOME/.local/bin/golangci-lint-2.12.2-linux-amd64/golangci-lint"
+          if [ ! -x "$bin" ]; then
+            curl -sSL https://github.com/golangci/golangci-lint/releases/download/v2.12.2/golangci-lint-2.12.2-linux-amd64.tar.gz | tar xz -C "$HOME/.local/bin"
+          fi
+          ln -sf "$bin" "$HOME/.local/bin/golangci-lint"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          golangci-lint --version
+          golangci-lint run --timeout 5m

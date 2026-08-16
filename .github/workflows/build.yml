@@ -1,0 +1,55 @@
+# Cross-compile matrix shared by ci and release. A stdlib-only library
+# builds everywhere or nowhere, so every platform combination is compiled
+# on the OS it targets: this catches accidental platform-specific code
+# (or a future build-tagged file) before it reaches a consumer.
+name: build
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: build linux targets
+        shell: bash
+        run: |
+          GOOS=linux GOARCH=amd64 go build ./...
+          GOOS=linux GOARCH=arm64 go build ./...
+
+  build-darwin:
+    runs-on: macos-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: build darwin targets
+        shell: bash
+        run: |
+          GOOS=darwin GOARCH=amd64 go build ./...
+          GOOS=darwin GOARCH=arm64 go build ./...
+
+  build-windows:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: build windows target
+        shell: bash
+        run: |
+          GOOS=windows GOARCH=amd64 go build ./...
